@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Auth Complete</title>
+  <script src="https://res.cdn.office.net/teams-js/2.22.0/js/MicrosoftTeams.min.js"></script>
+</head>
+<body>
+  <script>
+    microsoftTeams.app.initialize().then(() => {
+      microsoftTeams.authentication.notifySuccess();
+    }).catch((err) => {
+      microsoftTeams.authentication.notifyFailure(err);
+    });
+  </script>
+</body>
+</html>

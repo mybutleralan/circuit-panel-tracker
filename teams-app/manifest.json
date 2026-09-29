@@ -1,0 +1,46 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0",
+  "id": "298a6303-e982-458b-b970-32315c55375e",
+  "developer": {
+    "name": "Circuit Panel Tracker",
+    "websiteUrl": "https://yellow-moss-061c5ea10.3.azurestaticapps.net",
+    "privacyUrl": "https://yellow-moss-061c5ea10.3.azurestaticapps.net/privacy",
+    "termsOfUseUrl": "https://yellow-moss-061c5ea10.3.azurestaticapps.net/terms"
+  },
+  "name": {
+    "short": "Panel Tracker",
+    "full": "Circuit Panel Tracker"
+  },
+  "description": {
+    "short": "Manage electrical panels and circuits",
+    "full": "Circuit Panel Tracker helps electricians and facility managers document, organize, and manage electrical panels and circuits across buildings. Features include LOTO tracking, maintenance logs, QR codes, and CSV import."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#4f8ef7",
+  "staticTabs": [
+    {
+      "entityId": "panels",
+      "name": "Panels",
+      "contentUrl": "https://yellow-moss-061c5ea10.3.azurestaticapps.net/index.html",
+      "websiteUrl": "https://yellow-moss-061c5ea10.3.azurestaticapps.net/index.html",
+      "scopes": ["personal", "team"]
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "yellow-moss-061c5ea10.3.azurestaticapps.net",
+    "circuitpaneltracker-api-gsd8dva3b3hcc3gm.centralus-01.azurewebsites.net"
+  ],
+  "webApplicationInfo": {
+    "id": "298a6303-e982-458b-b970-32315c55375e",
+    "resource": "api://298a6303-e982-458b-b970-32315c55375e"
+  }
+}

@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circuit Panel Tracker</title>
+<script src="https://res.cdn.office.net/teams-js/2.22.0/js/MicrosoftTeams.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #22263a;
+    --bg4: #2a2f45;
+    --border: #333a55;
+    --accent: #4f8ef7;
+    --accent2: #6c63ff;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --emergency: #ff6b35;
+    --text: #e8eaf6;
+    --text2: #9aa3c2;
+    --text3: #6b7494;
+    --card-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .header-brand { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 700; color: var(--text); cursor: pointer; }
+  .header-brand svg { color: var(--accent); }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .user-badge { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: 0.82rem; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+  .user-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+  .main { max-width: 1400px; margin: 0 auto; padding: 24px; }
+  .view { display: none; }
+  .view.active { display: block; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .page-title { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .page-title svg { color: var(--accent); }
+  .breadcrumb { font-size: 0.85rem; color: var(--text3); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .breadcrumb a { color: var(--accent); text-decoration: none; cursor: pointer; }
+  .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .stat-label { font-size: 0.78rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--text); }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.warning { color: var(--warning); }
+  .stat-value.danger { color: var(--danger); }
+  .stat-value.success { color: var(--success); }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .search-box { flex: 1; min-width: 200px; position: relative; }
+  .search-box input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px 9px 36px; color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); pointer-events: none; }
+  .sort-select { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text); font-size: 0.9rem; outline: none; cursor: pointer; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: var(--radius-sm); font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3a7be0; }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--bg4); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-warning { background: var(--warning); color: #000; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+  .btn-icon { padding: 7px; border-radius: var(--radius-sm); background: var(--bg3); border: 1px solid var(--border); color: var(--text2); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .btn-icon:hover { background: var(--bg4); color: var(--text); }
+  .btn-icon.danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .panel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+  .panel-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+  .panel-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--card-shadow); }
+  .panel-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .panel-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .panel-card-name { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+  .panel-card-building { font-size: 0.8rem; color: var(--text3); margin-top: 2px; }
+  .panel-card-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; }
+  .panel-card:hover .panel-card-actions { opacity: 1; }
+  .panel-specs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .spec-item { background: var(--bg3); border-radius: 6px; padding: 8px 10px; }
+  .spec-label { font-size: 0.7rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+  .spec-value { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-top: 2px; }
+  .panel-card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border); }
+  .circuit-count { font-size: 0.85rem; color: var(--text2); display: flex; align-items: center; gap: 5px; }
+  .circuit-count strong { color: var(--accent); font-size: 1rem; }
+  .phase-badge { font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+  .phase-1 { background: rgba(79,142,247,0.15); color: var(--accent); border: 1px solid rgba(79,142,247,0.3); }
+  .phase-3 { background: rgba(108,99,255,0.15); color: var(--accent2); border: 1px solid rgba(108,99,255,0.3); }
+  .feed-badge { font-size: 0.72rem; color: var(--text3); background: var(--bg3); border: 1px solid var(--border); padding: 2px 8px; border-radius: 20px; }
+  .circuit-table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .circuit-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .circuit-table th { background: var(--bg3); padding: 11px 14px; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); font-weight: 600; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .circuit-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .circuit-table tr:last-child td { border-bottom: none; }
+  .circuit-table tr:hover td { background: var(--bg3); }
+  .circuit-table tr.loto-row td { background: rgba(239,68,68,0.08); }
+  .circuit-table tr.emergency-row td { border-left: 3px solid var(--emergency); }
+  .breaker-num { font-weight: 700; color: var(--accent); font-size: 1rem; }
+  .loto-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); border-radius: 20px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; }
+  .emergency-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,107,53,0.15); color: var(--emergency); border: 1px solid rgba(255,107,53,0.3); border-radius: 20px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; }
+  .breaker-type-badge { font-size: 0.72rem; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+  .bt-standard { background: var(--bg4); color: var(--text2); }
+  .bt-afci { background: rgba(245,158,11,0.15); color: var(--warning); }
+  .bt-gfci { background: rgba(34,197,94,0.15); color: var(--success); }
+  .bt-dual { background: rgba(108,99,255,0.15); color: var(--accent2); }
+  .row-actions { display: flex; gap: 4px; }
+  .loto-banner { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.4); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .loto-banner svg { color: var(--danger); flex-shrink: 0; }
+  .loto-banner-text { font-size: 0.85rem; color: var(--danger); font-weight: 600; }
+  .loto-banner-sub { font-size: 0.78rem; color: var(--text3); font-weight: 400; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+  .modal-overlay.hidden { display: none; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .modal-lg { max-width: 800px; }
+  .modal-sm { max-width: 440px; }
+  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg2); z-index: 1; }
+  .modal-title { font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .modal-close { background: none; border: none; color: var(--text3); cursor: pointer; padding: 4px; border-radius: 6px; display: flex; align-items: center; }
+  .modal-close:hover { color: var(--text); background: var(--bg3); }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text2); }
+  .form-label .req { color: var(--danger); }
+  .form-control { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.2s; width: 100%; }
+  .form-control:focus { border-color: var(--accent); }
+  .form-control::placeholder { color: var(--text3); }
+  select.form-control { cursor: pointer; }
+  textarea.form-control { resize: vertical; min-height: 80px; }
+  .form-check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .form-check input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .form-check-label { font-size: 0.88rem; color: var(--text2); }
+  .photo-upload-area { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .photo-upload-area:hover { border-color: var(--accent); background: rgba(79,142,247,0.05); }
+  .photo-upload-area.has-photo { border-style: solid; border-color: var(--success); }
+  .photo-preview { max-width: 100%; max-height: 120px; border-radius: 6px; margin-top: 8px; }
+  .qr-container { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 10px 0; }
+  .qr-box { background: #fff; padding: 16px; border-radius: var(--radius-sm); }
+  .log-list { display: flex; flex-direction: column; gap: 10px; }
+  .log-entry { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .log-entry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .log-entry-meta { font-size: 0.78rem; color: var(--text3); }
+  .log-entry-who { font-weight: 600; color: var(--text2); }
+  .log-entry-desc { font-size: 0.88rem; color: var(--text); }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+  .import-section { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 14px; }
+  .import-section h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+  .drop-zone { border: 2px dashed var(--border); border-radius: var(--radius-sm); padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .drop-zone:hover { border-color: var(--accent); background: rgba(79,142,247,0.05); }
+  .import-result { font-size: 0.82rem; padding: 8px 12px; border-radius: 6px; margin-top: 8px; }
+  .import-result.success { background: rgba(34,197,94,0.1); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+  .import-result.error { background: rgba(239,68,68,0.1); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+  .panel-detail-header { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+  .panel-detail-grid { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: start; }
+  .panel-detail-specs { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .detail-spec { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; }
+  .detail-spec-label { font-size: 0.7rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+  .detail-spec-value { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-top: 2px; }
+  .panel-photo { width: 120px; height: 90px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; }
+  .panel-photo-placeholder { width: 120px; height: 90px; background: var(--bg3); border: 1px dashed var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 0.75rem; text-align: center; cursor: pointer; }
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+  .toast { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 0.88rem; color: var(--text); box-shadow: var(--card-shadow); display: flex; align-items: center; gap: 10px; min-width: 240px; animation: slideIn 0.3s ease; }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  .toast.warning { border-left: 3px solid var(--warning); }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 9999; }
+  .loading-screen.hidden { display: none; }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .lightbox.hidden { display: none; }
+  .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: var(--radius-sm); }
+  .section-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .no-results { text-align: center; padding: 48px 20px; color: var(--text3); font-size: 0.9rem; }
+  @media (max-width: 768px) {
+    .main { padding: 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .panel-grid { grid-template-columns: 1fr; }
+    .circuit-table { font-size: 0.8rem; }
+    .panel-detail-grid { grid-template-columns: 1fr; }
+    .stats-bar { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <div style="color:var(--text2);font-size:0.9rem;">Signing you in...</div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand" onclick="showView('dashboard')">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="3"/><path d="M8 6h8M8 10h8M8 14h4"/><circle cx="17" cy="14" r="2"/><path d="M17 16v2"/></svg>
+    <span>Circuit Panel Tracker</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-secondary btn-sm" onclick="openImportModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Import CSV
+    </button>
+    <div class="user-badge">
+      <div class="user-dot"></div>
+      <span id="currentUserName">Loading...</span>
+    </div>
+  </div>
+</header>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox hidden" id="lightbox" onclick="closeLightbox()">
+  <img id="lightboxImg" src="" alt="Panel Schedule">
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="page-header">
+      <div class="page-title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Electrical Panels
+      </div>
+      <button class="btn btn-primary" onclick="openPanelModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Panel
+      </button>
+    </div>
+    <div class="stats-bar" id="dashboardStats"></div>
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="panelSearch" placeholder="Search panels..." oninput="renderPanels()">
+      </div>
+      <select class="sort-select" id="panelSort" onchange="renderPanels()">
+        <option value="name">Sort: Name</option>
+        <option value="building">Sort: Building</option>
+        <option value="floor">Sort: Floor</option>
+        <option value="circuits">Sort: Circuit Count</option>
+      </select>
+    </div>
+    <div class="panel-grid" id="panelGrid"></div>
+  </div>
+
+  <!-- PANEL DETAIL -->
+  <div class="view" id="view-panel">
+    <div class="breadcrumb">
+      <a onclick="showView('dashboard')">Panels</a>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <span id="detailBreadcrumb">Panel Detail</span>
+    </div>
+    <div class="page-header">
+      <div class="page-title" id="detailTitle">Panel Detail</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="openQRModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          QR Code
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="editCurrentPanel()">Edit Panel</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCurrentPanel()">Delete Panel</button>
+      </div>
+    </div>
+    <div class="panel-detail-header" id="panelDetailHeader"></div>
+    <div class="page-header" style="margin-top:20px;">
+      <div class="section-title">Circuits</div>
+      <button class="btn btn-primary btn-sm" onclick="openCircuitModal()">Add Circuit</button>
+    </div>
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="circuitSearch" placeholder="Search circuits..." oninput="renderCircuits()">
+      </div>
+      <select class="sort-select" id="circuitSort" onchange="renderCircuits()">
+        <option value="breaker">Sort: Breaker #</option>
+        <option value="controls">Sort: Controls</option>
+        <option value="amperage">Sort: Amperage</option>
+        <option value="room">Sort: Room</option>
+      </select>
+    </div>
+    <div id="circuitTableWrap"></div>
+  </div>
+
+</div>
+
+<!-- PANEL MODAL -->
+<div class="modal-overlay hidden" id="panelModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title"><span id="panelModalTitle">Add Panel</span></div>
+      <button class="modal-close" onclick="closePanelModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Panel Name <span class="req">*</span></label><input type="text" class="form-control" id="pName" placeholder="e.g. Main Panel A"></div>
+        <div class="form-group"><label class="form-label">Building <span class="req">*</span></label><input type="text" class="form-control" id="pBuilding" placeholder="e.g. Building 1"></div>
+        <div class="form-group"><label class="form-label">Floor</label><input type="text" class="form-control" id="pFloor" placeholder="e.g. 2nd Floor"></div>
+        <div class="form-group"><label class="form-label">Zone / Area</label><input type="text" class="form-control" id="pZone" placeholder="e.g. North Wing"></div>
+        <div class="form-group"><label class="form-label">Voltage Rating</label><select class="form-control" id="pVoltage"><option value="120V">120V</option><option value="208V">208V</option><option value="240V" selected>240V</option><option value="277V">277V</option><option value="480V">480V</option><option value="600V">600V</option></select></div>
+        <div class="form-group"><label class="form-label">Phase Type</label><select class="form-control" id="pPhase"><option value="Single Phase">Single Phase</option><option value="3-Phase">3-Phase</option></select></div>
+        <div class="form-group"><label class="form-label">Amperage Rating</label><input type="number" class="form-control" id="pAmperage" placeholder="e.g. 200"></div>
+        <div class="form-group"><label class="form-label">Mounting Type</label><select class="form-control" id="pMounting"><option value="Surface">Surface</option><option value="Flush">Flush</option><option value="Free-Standing">Free-Standing</option></select></div>
+        <div class="form-group full"><label class="form-label">Fed From Panel (optional)</label><select class="form-control" id="pFedFrom"><option value="">— None (Main Panel) —</option></select></div>
+        <div class="form-group full">
+          <label class="form-label">Panel Schedule Photo</label>
+          <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('photoInput').click()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text3);margin:0 auto;display:block;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <p style="font-size:0.82rem;color:var(--text3);margin-top:6px;">Click to upload panel schedule photo</p>
+            <img id="photoPreview" class="photo-preview" style="display:none;" alt="Preview">
+          </div>
+          <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closePanelModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePanel()">Save Panel</button>
+    </div>
+  </div>
+</div>
+
+<!-- CIRCUIT MODAL -->
+<div class="modal-overlay hidden" id="circuitModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title"><span id="circuitModalTitle">Add Circuit</span></div>
+      <button class="modal-close" onclick="closeCircuitModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid cols-3">
+        <div class="form-group"><label class="form-label">Breaker # <span class="req">*</span></label><input type="number" class="form-control" id="cBreaker" placeholder="e.g. 1"></div>
+        <div class="form-group"><label class="form-label">Amperage</label><input type="number" class="form-control" id="cAmperage" placeholder="e.g. 20"></div>
+        <div class="form-group"><label class="form-label">Voltage</label><select class="form-control" id="cVoltage"><option value="120V">120V</option><option value="208V">208V</option><option value="240V">240V</option><option value="277V">277V</option><option value="480V">480V</option></select></div>
+        <div class="form-group full"><label class="form-label">What It Controls <span class="req">*</span></label><input type="text" class="form-control" id="cControls" placeholder="e.g. HVAC Unit 1"></div>
+        <div class="form-group full"><label class="form-label">Label / Description</label><input type="text" class="form-control" id="cLabel" placeholder="e.g. Rooftop HVAC - Zone A"></div>
+        <div class="form-group"><label class="form-label">Room / Location</label><input type="text" class="form-control" id="cRoom" placeholder="e.g. Server Room 201"></div>
+        <div class="form-group"><label class="form-label">Equipment Served</label><input type="text" class="form-control" id="cEquipment" placeholder="e.g. Carrier RTU-1"></div>
+        <div class="form-group"><label class="form-label">Breaker Type</label><select class="form-control" id="cBreakerType"><option value="Standard">Standard</option><option value="AFCI">AFCI</option><option value="GFCI">GFCI</option><option value="AFCI/GFCI Dual">AFCI/GFCI Dual</option></select></div>
+        <div class="form-group"><label class="form-label">Last Tested Date</label><input type="date" class="form-control" id="cLastTested"></div>
+        <div class="form-group full"><label class="form-check"><input type="checkbox" id="cEmergency"><span class="form-check-label">⚡ Emergency / Backup Power Circuit</span></label></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCircuitModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCircuit()">Save Circuit</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOTO MODAL -->
+<div class="modal-overlay hidden" id="lotoModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--danger)">Apply Lockout/Tagout</div>
+      <button class="modal-close" onclick="closeLotoModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.82rem;color:var(--danger);">⚠️ This will lock out the circuit. Only you can remove this lockout.</div>
+      <div class="form-group"><label class="form-label">Reason for Lockout <span class="req">*</span></label><textarea class="form-control" id="lotoReason" placeholder="e.g. Maintenance on HVAC unit..." rows="3"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeLotoModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="applyLoto()">Apply Lockout</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG MODAL -->
+<div class="modal-overlay hidden" id="logModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Maintenance Log</div>
+      <button class="modal-close" onclick="closeLogModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="logCircuitInfo" style="font-size:0.85rem;color:var(--text2);margin-bottom:14px;"></div>
+      <div class="form-group" style="margin-bottom:12px;"><label class="form-label">Work Performed <span class="req">*</span></label><textarea class="form-control" id="logDesc" placeholder="Describe the maintenance work..." rows="2"></textarea></div>
+      <button class="btn btn-primary btn-sm" onclick="addLogEntry()" style="margin-bottom:16px;">Add Entry</button>
+      <div class="divider"></div>
+      <div class="section-title" style="font-size:0.9rem;">History</div>
+      <div id="logList"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeLogModal()">Close</button></div>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div class="modal-overlay hidden" id="qrModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">QR Code</div>
+      <button class="modal-close" onclick="closeQRModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-container">
+        <div class="qr-box" id="qrCodeBox"></div>
+        <div id="qrLabel" style="font-size:0.85rem;color:var(--text2);text-align:center;"></div>
+        <button class="btn btn-primary" onclick="downloadQR()">Download PNG</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay hidden" id="importModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">CSV Import</div>
+      <button class="modal-close" onclick="closeImportModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="import-section">
+        <h4>📋 Import Panels</h4>
+        <button class="btn btn-secondary btn-sm" onclick="downloadPanelTemplate()" style="margin-bottom:10px;">Download Panel Template</button>
+        <div class="drop-zone" onclick="document.getElementById('panelCSVInput').click()">
+          <p style="font-size:0.85rem;color:var(--text3);">Click to browse panel CSV</p>
+        </div>
+        <input type="file" id="panelCSVInput" accept=".csv" style="display:none" onchange="importPanelCSV(event)">
+        <div id="panelImportResult"></div>
+      </div>
+      <div class="import-section">
+        <h4>⚡ Import Circuits</h4>
+        <button class="btn btn-secondary btn-sm" onclick="downloadCircuitTemplate()" style="margin-bottom:10px;">Download Circuit Template</button>
+        <div class="drop-zone" onclick="document.getElementById('circuitCSVInput').click()">
+          <p style="font-size:0.85rem;color:var(--text3);">Click to browse circuit CSV</p>
+        </div>
+        <input type="file" id="circuitCSVInput" accept=".csv" style="display:none" onchange="importCircuitCSV(event)">
+        <div id="circuitImportResult"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeImportModal()">Close</button></div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay hidden" id="confirmModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--danger)">Confirm Delete</div>
+      <button class="modal-close" onclick="closeConfirmModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body"><p id="confirmMessage" style="font-size:0.9rem;color:var(--text2);"></p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// TEAMS SSO & API CONFIG
+// ============================================================
+const API_BASE = 'https://circuitpaneltracker-api-gsd8dva3b3hcc3gm.centralus-01.azurewebsites.net/api';
+let currentUser = null;
+let teamsToken = null;
+let currentPanelId = null;
+let editingPanelId = null;
+let editingCircuitId = null;
+let lotoCircuitId = null;
+let logCircuitId = null;
+let pendingPhotoData = null;
+let confirmCallback = null;
+
+// ============================================================
+// TEAMS INITIALIZATION & SSO
+// ============================================================
+async function initTeams() {
+  try {
+    await microsoftTeams.app.initialize();
+    const context = await microsoftTeams.app.getContext();
+    applyTeamsTheme(context.app.theme);
+    microsoftTeams.app.registerOnThemeChangeHandler(applyTeamsTheme);
+    await getTeamsToken();
+  } catch (err) {
+    console.log('Not in Teams, running standalone:', err);
+    currentUser = { userId: 'local-user', tenantId: 'local-tenant', name: 'Local User', email: 'local@test.com' };
+    document.getElementById('currentUserName').textContent = currentUser.name;
+    hideLoading();
+    init();
+  }
+}
+
+async function getTeamsToken() {
+  try {
+    teamsToken = await microsoftTeams.authentication.getAuthToken();
+    const payload = JSON.parse(atob(teamsToken.split('.')[1]));
+    currentUser = {
+      userId: payload.oid,
+      tenantId: payload.tid,
+      name: payload.name,
+      email: payload.preferred_username
+    };
+    document.getElementById('currentUserName').textContent = currentUser.name;
+    hideLoading();
+    init();
+  } catch (err) {
+    console.error('SSO failed:', err);
+    showToast('Sign-in failed. Please try again.', 'error');
+    hideLoading();
+  }
+}
+
+function applyTeamsTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.style.setProperty('--bg', '#1f1f1f');
+  } else if (theme === 'contrast') {
+    document.documentElement.style.setProperty('--bg', '#000000');
+  }
+}
+
+function hideLoading() {
+  document.getElementById('loadingScreen').classList.add('hidden');
+}
+
+// ============================================================
+// API CALLS
+// ============================================================
+async function apiCall(method, endpoint, body) {
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${teamsToken}`
+    }
+  };
+  if (body) options.body = JSON.stringify(body);
+  const res = await fetch(`${API_BASE}${endpoint}`, options);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+// ============================================================
+// DATA STORE (local cache)
+// ============================================================
+let db = { panels: [], circuits: [], logs: [] };
+
+async function loadAllData() {
+  try {
+    db.panels = await apiCall('GET', '/panels');
+    db.circuits = await apiCall('GET', '/circuits');
+  } catch (err) {
+    console.error('Failed to load data:', err);
+    showToast('Failed to load data from server.', 'error');
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  await loadAllData();
+  checkDeepLink();
+  renderDashboard();
+}
+
+// ============================================================
+// ROUTING
+// ============================================================
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  if (name === 'dashboard') {
+    currentPanelId = null;
+    renderDashboard();
+    history.replaceState(null, '', window.location.pathname);
+  }
+}
+
+function checkDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const pid = params.get('panel');
+  if (pid && db.panels.find(p => p.id === pid)) openPanel(pid);
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  renderStats();
+  renderPanels();
+}
+
+function renderStats() {
+  const lotoCount = db.circuits.filter(c => c.loto).length;
+  const emergencyCount = db.circuits.filter(c => c.emergency).length;
+  document.getElementById('dashboardStats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Panels</div><div class="stat-value accent">${db.panels.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Circuits</div><div class="stat-value">${db.circuits.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Locked Out</div><div class="stat-value danger">${lotoCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Emergency Circuits</div><div class="stat-value warning">${emergencyCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Buildings</div><div class="stat-value success">${[...new Set(db.panels.map(p=>p.building))].length}</div></div>
+  `;
+}
+
+function renderPanels() {
+  const search = (document.getElementById('panelSearch').value || '').toLowerCase();
+  const sort = document.getElementById('panelSort').value;
+  let panels = db.panels.filter(p =>
+    p.name.toLowerCase().includes(search) ||
+    p.building.toLowerCase().includes(search) ||
+    (p.floor||'').toLowerCase().includes(search)
+  );
+  panels.sort((a,b) => {
+    if (sort === 'name') return a.name.localeCompare(b.name);
+    if (sort === 'building') return a.building.localeCompare(b.building);
+    if (sort === 'floor') return (a.floor||'').localeCompare(b.floor||'');
+    if (sort === 'circuits') return getCircuitCount(b.id) - getCircuitCount(a.id);
+    return 0;
+  });
+  const grid = document.getElementById('panelGrid');
+  if (panels.length === 0) {
+    grid.innerHTML = `<div class="no-results">No panels found. <a href="#" onclick="openPanelModal()" style="color:var(--accent)">Add your first panel</a>.</div>`;
+    return;
+  }
+  grid.innerHTML = panels.map(p => renderPanelCard(p)).join('');
+}
+
+function getCircuitCount(panelId) {
+  return db.circuits.filter(c => c.panelId === panelId).length;
+}
+
+function getFedFromName(fedFromId) {
+  if (!fedFromId) return null;
+  const p = db.panels.find(x => x.id === fedFromId);
+  return p ? p.name : null;
+}
+
+function renderPanelCard(p) {
+  const circuitCount = getCircuitCount(p.id);
+  const fedName = getFedFromName(p.fedFrom);
+  const lotoCount = db.circuits.filter(c => c.panelId === p.id && c.loto).length;
+  return `
+    <div class="panel-card" onclick="openPanel('${p.id}')">
+      <div class="panel-card-header">
+        <div>
+          <div class="panel-card-name">${esc(p.name)}</div>
+          <div class="panel-card-building">${esc(p.building)}${p.floor ? ' · ' + esc(p.floor) : ''}${p.zone ? ' · ' + esc(p.zone) : ''}</div>
+        </div>
+        <div class="panel-card-actions" onclick="event.stopPropagation()">
+          <button class="btn-icon" onclick="openPanelModal('${p.id}')" title="Edit">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-icon danger" onclick="confirmDeletePanel('${p.id}')" title="Delete">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="panel-specs">
+        <div class="spec-item"><div class="spec-label">Voltage</div><div class="spec-value">${esc(p.voltage)}</div></div>
+        <div class="spec-item"><div class="spec-label">Amperage</div><div class="spec-value">${p.amperage ? p.amperage + 'A' : '—'}</div></div>
+        <div class="spec-item"><div class="spec-label">Mounting</div><div class="spec-value">${esc(p.mounting)}</div></div>
+        <div class="spec-item"><div class="spec-label">Circuits</div><div class="spec-value" style="color:var(--accent)">${circuitCount}</div></div>
+      </div>
+      <div class="panel-card-footer">
+        <div class="circuit-count">
+          <strong>${circuitCount}</strong> circuit${circuitCount !== 1 ? 's' : ''}
+          ${lotoCount > 0 ? `<span class="loto-badge" style="margin-left:4px;">🔒 ${lotoCount} LOTO</span>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          ${fedName ? `<span class="feed-badge">↑ ${esc(fedName)}</span>` : ''}
+          <span class="phase-badge ${p.phase === '3-Phase' ? 'phase-3' : 'phase-1'}">${esc(p.phase)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// PANEL DETAIL
+// ============================================================
+async function openPanel(panelId) {
+  currentPanelId = panelId;
+  const p = db.panels.find(x => x.id === panelId);
+  if (!p) return;
+  document.getElementById('detailBreadcrumb').textContent = p.name;
+  document.getElementById('detailTitle').textContent = p.name;
+  renderPanelDetailHeader(p);
+  try {
+    const circuits = await apiCall('GET', `/circuits?panelId=${panelId}`);
+    db.circuits = [...db.circuits.filter(c => c.panelId !== panelId), ...circuits];
+  } catch(err) { console.error(err); }
+  renderCircuits();
+  showView('panel');
+  history.replaceState(null, '', `?panel=${panelId}`);
+}
+
+function renderPanelDetailHeader(p) {
+  const fedName = getFedFromName(p.fedFrom);
+  document.getElementById('panelDetailHeader').innerHTML = `
+    <div class="panel-detail-grid">
+      <div>
+        <div style="font-size:1.2rem;font-weight:700;margin-bottom:4px;">${esc(p.name)}</div>
+        <div style="font-size:0.85rem;color:var(--text3);margin-bottom:14px;">${esc(p.building)}${p.floor ? ' · ' + esc(p.floor) : ''}${p.zone ? ' · ' + esc(p.zone) : ''}</div>
+        <div class="panel-detail-specs">
+          <div class="detail-spec"><div class="detail-spec-label">Voltage</div><div class="detail-spec-value">${esc(p.voltage)}</div></div>
+          <div class="detail-spec"><div class="detail-spec-label">Phase</div><div class="detail-spec-value">${esc(p.phase)}</div></div>
+          <div class="detail-spec"><div class="detail-spec-label">Amperage</div><div class="detail-spec-value">${p.amperage ? p.amperage + 'A' : '—'}</div></div>
+          <div class="detail-spec"><div class="detail-spec-label">Mounting</div><div class="detail-spec-value">${esc(p.mounting)}</div></div>
+          ${fedName ? `<div class="detail-spec"><div class="detail-spec-label">Fed From</div><div class="detail-spec-value" style="color:var(--accent);cursor:pointer;" onclick="openPanel('${p.fedFrom}')">${esc(fedName)}</div></div>` : ''}
+        </div>
+      </div>
+      <div>
+        ${p.photo
+          ? `<img src="${p.photo}" class="panel-photo" alt="Panel Schedule" onclick="openLightbox('${p.photo}')">`
+          : `<div class="panel-photo-placeholder" onclick="openPanelModal('${p.id}')"><div>Add Photo</div></div>`
+        }
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// CIRCUITS
+// ============================================================
+function renderCircuits() {
+  if (!currentPanelId) return;
+  const search = (document.getElementById('circuitSearch').value || '').toLowerCase();
+  const sort = document.getElementById('circuitSort').value;
+  let circuits = db.circuits.filter(c => c.panelId === currentPanelId && (
+    String(c.breaker).includes(search) ||
+    (c.controls||'').toLowerCase().includes(search) ||
+    (c.room||'').toLowerCase().includes(search)
+  ));
+  circuits.sort((a,b) => {
+    if (sort === 'breaker') return a.breaker - b.breaker;
+    if (sort === 'controls') return (a.controls||'').localeCompare(b.controls||'');
+    if (sort === 'amperage') return (b.amperage||0) - (a.amperage||0);
+    if (sort === 'room') return (a.room||'').localeCompare(b.room||'');
+    return 0;
+  });
+  const wrap = document.getElementById('circuitTableWrap');
+  if (circuits.length === 0) {
+    wrap.innerHTML = `<div class="no-results">No circuits found. <a href="#" onclick="openCircuitModal()" style="color:var(--accent)">Add the first circuit</a>.</div>`;
+    return;
+  }
+  const btClass = { 'Standard':'bt-standard','AFCI':'bt-afci','GFCI':'bt-gfci','AFCI/GFCI Dual':'bt-dual' };
+  wrap.innerHTML = `
+    <div class="circuit-table-wrap">
+      <table class="circuit-table">
+        <thead><tr><th>#</th><th>Controls</th><th>Room</th><th>Amps</th><th>Type</th><th>Last Tested</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${circuits.map(c => {
+            const isLoto = !!c.loto;
+            return `
+              <tr class="${isLoto ? 'loto-row' : c.emergency ? 'emergency-row' : ''}">
+                <td><span class="breaker-num">${c.breaker}</span></td>
+                <td>
+                  <div style="font-weight:600;">${esc(c.controls)}</div>
+                  ${c.label ? `<div style="font-size:0.75rem;color:var(--text3);">${esc(c.label)}</div>` : ''}
+                </td>
+                <td style="color:var(--text2);">${esc(c.room||'—')}</td>
+                <td style="color:var(--text2);">${c.amperage ? c.amperage + 'A' : '—'}</td>
+                <td><span class="breaker-type-badge ${btClass[c.breakerType]||'bt-standard'}">${esc(c.breakerType)}</span></td>
+                <td style="font-size:0.8rem;color:var(--text3);">${c.lastTested ? formatDate(c.lastTested) : '—'}</td>
+                <td>
+                  ${isLoto
+                    ? `<div><span class="loto-badge">🔒 LOCKED OUT</span><div style="font-size:0.72rem;color:var(--text3);margin-top:3px;">by ${esc(c.loto.byName)}</div></div>`
+                    : c.emergency ? `<span class="emergency-badge">⚡ EMERGENCY</span>`
+                    : `<span style="font-size:0.78rem;color:var(--success);">● Active</span>`
+                  }
+                </td>
+                <td>
+                  <div class="row-actions">
+                    ${isLoto
+                      ? (c.loto.by === currentUser.userId
+                          ? `<button class="btn btn-warning btn-sm" onclick="removeLoto('${c.id}')">Unlock</button>`
+                          : `<button class="btn btn-secondary btn-sm" disabled>Locked</button>`)
+                      : `<button class="btn btn-danger btn-sm" onclick="openLotoModal('${c.id}')">🔒 LOTO</button>`
+                    }
+                    <button class="btn-icon" onclick="openLogModal('${c.id}')" title="Log">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                    </button>
+                    <button class="btn-icon" onclick="openCircuitModal('${c.id}')" title="Edit">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="btn-icon danger" onclick="confirmDeleteCircuit('${c.id}')" title="Delete">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              ${isLoto ? `
+                <tr class="loto-row">
+                  <td colspan="8" style="padding:0 14px 10px;">
+                    <div class="loto-banner">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      <div>
+                        <div class="loto-banner-text">LOCKOUT/TAGOUT ACTIVE</div>
+                        <div class="loto-banner-sub">Locked by ${esc(c.loto.byName)} on ${formatDateTime(c.loto.date)} — ${esc(c.loto.reason)}</div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ` : ''}
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ============================================================
+// PANEL MODAL
+// ============================================================
+function openPanelModal(panelId) {
+  editingPanelId = panelId || null;
+  pendingPhotoData = null;
+  document.getElementById('panelModalTitle').textContent = panelId ? 'Edit Panel' : 'Add Panel';
+  const fedSelect = document.getElementById('pFedFrom');
+  fedSelect.innerHTML = '<option value="">— None (Main Panel) —</option>';
+  db.panels.filter(p => p.id !== panelId).forEach(p => {
+    fedSelect.innerHTML += `<option value="${p.id}">${esc(p.name)}</option>`;
+  });
+  if (panelId) {
+    const p = db.panels.find(x => x.id === panelId);
+    if (!p) return;
+    document.getElementById('pName').value = p.name;
+    document.getElementById('pBuilding').value = p.building;
+    document.getElementById('pFloor').value = p.floor || '';
+    document.getElementById('pZone').value = p.zone || '';
+    document.getElementById('pVoltage').value = p.voltage;
+    document.getElementById('pPhase').value = p.phase;
+    document.getElementById('pAmperage').value = p.amperage || '';
+    document.getElementById('pMounting').value = p.mounting;
+    document.getElementById('pFedFrom').value = p.fedFrom || '';
+    if (p.photo) {
+      document.getElementById('photoPreview').src = p.photo;
+      document.getElementById('photoPreview').style.display = 'block';
+      document.getElementById('photoUploadArea').classList.add('has-photo');
+      pendingPhotoData = p.photo;
+    } else {
+      document.getElementById('photoPreview').style.display = 'none';
+      document.getElementById('photoUploadArea').classList.remove('has-photo');
+    }
+  } else {
+    ['pName','pBuilding','pFloor','pZone','pAmperage'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('pVoltage').value = '240V';
+    document.getElementById('pPhase').value = 'Single Phase';
+    document.getElementById('pMounting').value = 'Surface';
+    document.getElementById('pFedFrom').value = '';
+    document.getElementById('photoPreview').style.display = 'none';
+    document.getElementById('photoUploadArea').classList.remove('has-photo');
+  }
+  document.getElementById('panelModal').classList.remove('hidden');
+}
+
+function closePanelModal() {
+  document.getElementById('panelModal').classList.add('hidden');
+  editingPanelId = null;
+}
+
+function handlePhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    pendingPhotoData = e.target.result;
+    document.getElementById('photoPreview').src = pendingPhotoData;
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('photoUploadArea').classList.add('has-photo');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function savePanel() {
+  const name = document.getElementById('pName').value.trim();
+  const building = document.getElementById('pBuilding').value.trim();
+  if (!name) { showToast('Panel name is required.', 'error'); return; }
+  if (!building) { showToast('Building is required.', 'error'); return; }
+  const data = {
+    name, building,
+    floor: document.getElementById('pFloor').value.trim(),
+    zone: document.getElementById('pZone').value.trim(),
+    voltage: document.getElementById('pVoltage').value,
+    phase: document.getElementById('pPhase').value,
+    amperage: parseInt(document.getElementById('pAmperage').value) || null,
+    mounting: document.getElementById('pMounting').value,
+    fedFrom: document.getElementById('pFedFrom').value,
+    photo: pendingPhotoData || null,
+  };
+  try {
+    if (editingPanelId) {
+      const updated = await apiCall('PUT', `/panels/${editingPanelId}`, data);
+      const idx = db.panels.findIndex(p => p.id === editingPanelId);
+      db.panels[idx] = updated;
+      showToast('Panel updated.', 'success');
+    } else {
+      const created = await apiCall('POST', '/panels', data);
+      db.panels.push(created);
+      showToast('Panel added.', 'success');
+    }
+    closePanelModal();
+    renderDashboard();
+  } catch(err) {
+    showToast('Failed to save panel.', 'error');
+  }
+}
+
+function editCurrentPanel() { openPanelModal(currentPanelId); }
+
+function deleteCurrentPanel() { confirmDeletePanel(currentPanelId, () => showView('dashboard')); }
+
+function confirmDeletePanel(panelId, afterDelete) {
+  const p = db.panels.find(x => x.id === panelId);
+  if (!p) return;
+  showConfirm(`Delete panel "${p.name}"? This will also delete all its circuits and logs.`, async () => {
+    try {
+      await apiCall('DELETE', `/panels/${panelId}`);
+      db.panels = db.panels.filter(p => p.id !== panelId);
+      db.circuits = db.circuits.filter(c => c.panelId !== panelId);
+      showToast('Panel deleted.', 'success');
+      if (afterDelete) afterDelete();
+      else renderDashboard();
+    } catch(err) { showToast('Failed to delete panel.', 'error'); }
+  });
+}
+
+// ============================================================
+// CIRCUIT MODAL
+// ============================================================
+function openCircuitModal(circuitId) {
+  editingCircuitId = circuitId || null;
+  document.getElementById('circuitModalTitle').textContent = circuitId ? 'Edit Circuit' : 'Add Circuit';
+  if (circuitId) {
+    const c = db.circuits.find(x => x.id === circuitId);
+    if (!c) return;
+    document.getElementById('cBreaker').value = c.breaker;
+    document.getElementById('cControls').value = c.controls;
+    document.getElementById('cLabel').value = c.label || '';
+    document.getElementById('cRoom').value = c.room || '';
+    document.getElementById('cEquipment').value = c.equipment || '';
+    document.getElementById('cAmperage').value = c.amperage || '';
+    document.getElementById('cVoltage').value = c.voltage || '120V';
+    document.getElementById('cBreakerType').value = c.breakerType;
+    document.getElementById('cLastTested').value = c.lastTested || '';
+    document.getElementById('cEmergency').checked = c.emergency;
+  } else {
+    ['cBreaker','cControls','cLabel','cRoom','cEquipment','cAmperage','cLastTested'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('cVoltage').value = '120V';
+    document.getElementById('cBreakerType').value = 'Standard';
+    document.getElementById('cEmergency').checked = false;
+  }
+  document.getElementById('circuitModal').classList.remove('hidden');
+}
+
+function closeCircuitModal() {
+  document.getElementById('circuitModal').classList.add('hidden');
+  editingCircuitId = null;
+}
+
+async function saveCircuit() {
+  const breaker = parseInt(document.getElementById('cBreaker').value);
+  const controls = document.getElementById('cControls').value.trim();
+  if (!breaker) { showToast('Breaker number is required.', 'error'); return; }
+  if (!controls) { showToast('Controls field is required.', 'error'); return; }
+  const data = {
+    panelId: currentPanelId,
+    breaker, controls,
+    label: document.getElementById('cLabel').value.trim(),
+    room: document.getElementById('cRoom').value.trim(),
+    equipment: document.getElementById('cEquipment').value.trim(),
+    amperage: parseInt(document.getElementById('cAmperage').value) || null,
+    voltage: document.getElementById('cVoltage').value,
+    breakerType: document.getElementById('cBreakerType').value,
+    lastTested: document.getElementById('cLastTested').value,
+    emergency: document.getElementById('cEmergency').checked,
+  };
+  try {
+    if (editingCircuitId) {
+      const updated = await apiCall('PUT', `/circuits/${editingCircuitId}`, data);
+      const idx = db.circuits.findIndex(c => c.id === editingCircuitId);
+      db.circuits[idx] = updated;
+      showToast('Circuit updated.', 'success');
+    } else {
+      const created = await apiCall('POST', '/circuits', data);
+      db.circuits.push(created);
+      showToast('Circuit added.', 'success');
+    }
+    closeCircuitModal();
+    renderCircuits();
+    renderStats();
+  } catch(err) { showToast('Failed to save circuit.', 'error'); }
+}
+
+function confirmDeleteCircuit(circuitId) {
+  const c = db.circuits.find(x => x.id === circuitId);
+  if (!c) return;
+  showConfirm(`Delete circuit #${c.breaker} "${c.controls}"?`, async () => {
+    try {
+      await apiCall('DELETE', `/circuits/${circuitId}`);
+      db.circuits = db.circuits.filter(x => x.id !== circuitId);
+      showToast('Circuit deleted.', 'success');
+      renderCircuits();
+      renderStats();
+    } catch(err) { showToast('Failed to delete circuit.', 'error'); }
+  });
+}
+
+// ============================================================
+// LOTO
+// ============================================================
+function openLotoModal(circuitId) {
+  lotoCircuitId = circuitId;
+  document.getElementById('lotoReason').value = '';
+  document.getElementById('lotoModal').classList.remove('hidden');
+}
+
+function closeLotoModal() {
+  document.getElementById('lotoModal').classList.add('hidden');
+  lotoCircuitId = null;
+}
+
+async function applyLoto() {
+  const reason = document.getElementById('lotoReason').value.trim();
+  if (!reason) { showToast('Please provide a reason.', 'error'); return; }
+  try {
+    const lotoData = {
+      loto: {
+        by: currentUser.userId,
+        byName: currentUser.name,
+        date: new Date().toISOString(),
+        reason
+      }
+    };
+    const updated = await apiCall('PUT', `/circuits/${lotoCircuitId}`, lotoData);
+    const idx = db.circuits.findIndex(c => c.id === lotoCircuitId);
+    db.circuits[idx] = updated;
+    closeLotoModal();
+    renderCircuits();
+    renderStats();
+    showToast('Lockout applied.', 'warning');
+  } catch(err) { showToast('Failed to apply lockout.', 'error'); }
+}
+
+async function removeLoto(circuitId) {
+  try {
+    const updated = await apiCall('PUT', `/circuits/${circuitId}`, { loto: null });
+    const idx = db.circuits.findIndex(c => c.id === circuitId);
+    db.circuits[idx] = updated;
+    renderCircuits();
+    renderStats();
+    showToast('Lockout removed.', 'success');
+  } catch(err) { showToast(err.message || 'Failed to remove lockout.', 'error'); }
+}
+
+// ============================================================
+// MAINTENANCE LOG
+// ============================================================
+async function openLogModal(circuitId) {
+  logCircuitId = circuitId;
+  const c = db.circuits.find(x => x.id === circuitId);
+  if (!c) return;
+  document.getElementById('logCircuitInfo').innerHTML = `Circuit #${c.breaker} — <strong>${esc(c.controls)}</strong>`;
+  document.getElementById('logDesc').value = '';
+  await renderLogList();
+  document.getElementById('logModal').classList.remove('hidden');
+}
+
+function closeLogModal() {
+  document.getElementById('logModal').classList.add('hidden');
+  logCircuitId = null;
+}
+
+async function renderLogList() {
+  try {
+    const logs = await apiCall('GET', `/logs?circuitId=${logCircuitId}`);
+    const el = document.getElementById('logList');
+    if (logs.length === 0) {
+      el.innerHTML = `<div class="empty-state"><p>No maintenance logs yet.</p></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="log-list">${logs.map(l => `
+      <div class="log-entry">
+        <div class="log-entry-header">
+          <div class="log-entry-meta">${formatDate(l.date)} · <span class="log-entry-who">${esc(l.by)}</span></div>
+          <button class="btn-icon danger" onclick="deleteLog('${l.id}')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+        <div class="log-entry-desc">${esc(l.desc)}</div>
+      </div>
+    `).join('')}</div>`;
+  } catch(err) { console.error(err); }
+}
+
+async function addLogEntry() {
+  const desc = document.getElementById('logDesc').value.trim();
+  if (!desc) { showToast('Please describe the work performed.', 'error'); return; }
+  try {
+    await apiCall('POST', '/logs', { circuitId: logCircuitId, desc });
+    document.getElementById('logDesc').value = '';
+    await renderLogList();
+    showToast('Log entry added.', 'success');
+  } catch(err) { showToast('Failed to add log entry.', 'error'); }
+}
+
+async function deleteLog(logId) {
+  try {
+    await apiCall('DELETE', `/logs/${logId}`);
+    await renderLogList();
+    showToast('Log entry deleted.', 'success');
+  } catch(err) { showToast('Failed to delete log.', 'error'); }
+}
+
+// ============================================================
+// QR CODE
+// ============================================================
+function openQRModal() {
+  const p = db.panels.find(x => x.id === currentPanelId);
+  if (!p) return;
+  const qrBox = document.getElementById('qrCodeBox');
+  qrBox.innerHTML = '';
+  const url = `${window.location.origin}${window.location.pathname}?panel=${currentPanelId}`;
+  new QRCode(qrBox, { text: url, width: 200, height: 200, colorDark: '#000000', colorLight: '#ffffff' });
+  document.getElementById('qrLabel').innerHTML = `<strong>${esc(p.name)}</strong><br>${esc(p.floor || p.building)}`;
+  document.getElementById('qrModal').classList.remove('hidden');
+}
+
+function closeQRModal() { document.getElementById('qrModal').classList.add('hidden'); }
+
+function downloadQR() {
+  const p = db.panels.find(x => x.id === currentPanelId);
+  if (!p) return;
+  const qrCanvas = document.querySelector('#qrCodeBox canvas');
+  if (!qrCanvas) return;
+  const canvas = document.createElement('canvas');
+  const padding = 20;
+  const labelHeight = 50;
+  canvas.width = qrCanvas.width + padding * 2;
+  canvas.height = qrCanvas.height + padding * 2 + labelHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(qrCanvas, padding, padding);
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(p.name, canvas.width / 2, qrCanvas.height + padding + 22);
+  ctx.font = '13px sans-serif';
+  ctx.fillStyle = '#555555';
+  ctx.fillText(p.floor || p.building, canvas.width / 2, qrCanvas.height + padding + 42);
+  const link = document.createElement('a');
+  link.download = `QR-${p.name.replace(/\s+/g,'-')}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('QR code downloaded.', 'success');
+}
+
+// ============================================================
+// CSV IMPORT
+// ============================================================
+function openImportModal() { document.getElementById('importModal').classList.remove('hidden'); }
+function closeImportModal() { document.getElementById('importModal').classList.add('hidden'); }
+
+function downloadPanelTemplate() {
+  const csv = 'name,building,floor,zone,voltage,phase,amperage,mounting,fedFrom\nMain Panel A,Building 1,1st Floor,Utility Room,240V,Single Phase,200,Surface,\n';
+  downloadCSV(csv, 'panel-template.csv');
+}
+
+function downloadCircuitTemplate() {
+  const csv = 'panelName,breaker,controls,label,room,equipment,amperage,voltage,breakerType,emergency,lastTested\nMain Panel A,1,HVAC Unit 1,Rooftop HVAC,Rooftop,Carrier RTU-1,30,240V,Standard,false,2024-03-15\n';
+  downloadCSV(csv, 'circuit-template.csv');
+}
+
+function downloadCSV(content, filename) {
+  const blob = new Blob([content], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importPanelCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      let added = 0, skipped = 0;
+      for (const row of rows) {
+        if (!row.name || !row.building) { skipped++; continue; }
+        let fedFromId = '';
+        if (row.fedFrom) {
+          const parent = db.panels.find(p => p.name.toLowerCase() === row.fedFrom.toLowerCase());
+          if (parent) fedFromId = parent.id;
+        }
+        try {
+          const created = await apiCall('POST', '/panels', {
+            name: row.name, building: row.building,
+            floor: row.floor||'', zone: row.zone||'',
+            voltage: row.voltage||'240V', phase: row.phase||'Single Phase',
+            amperage: parseInt(row.amperage)||null, mounting: row.mounting||'Surface',
+            fedFrom: fedFromId, photo: null
+          });
+          db.panels.push(created);
+          added++;
+        } catch(err) { skipped++; }
+      }
+      renderDashboard();
+      document.getElementById('panelImportResult').innerHTML = `<div class="import-result success">✓ Imported ${added} panels${skipped > 0 ? `, skipped ${skipped}` : ''}.</div>`;
+    } catch(err) {
+      document.getElementById('panelImportResult').innerHTML = `<div class="import-result error">Error: ${err.message}</div>`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function importCircuitCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const rows = parseCSV(e.target.result);
+      let added = 0, skipped = 0;
+      for (const row of rows) {
+        if (!row.panelName || !row.breaker || !row.controls) { skipped++; continue; }
+        const panel = db.panels.find(p => p.name.toLowerCase() === row.panelName.toLowerCase());
+        if (!panel) { skipped++; continue; }
+        try {
+          const created = await apiCall('POST', '/circuits', {
+            panelId: panel.id, breaker: parseInt(row.breaker),
+            controls: row.controls, label: row.label||'',
+            room: row.room||'', equipment: row.equipment||'',
+            amperage: parseInt(row.amperage)||null, voltage: row.voltage||'120V',
+            breakerType: row.breakerType||'Standard',
+            emergency: row.emergency === 'true',
+            lastTested: row.lastTested||''
+          });
+          db.circuits.push(created);
+          added++;
+        } catch(err) { skipped++; }
+      }
+      renderStats();
+      document.getElementById('circuitImportResult').innerHTML = `<div class="import-result success">✓ Imported ${added} circuits${skipped > 0 ? `, skipped ${skipped}` : ''}.</div>`;
+    } catch(err) {
+      document.getElementById('circuitImportResult').innerHTML = `<div class="import-result error">Error: ${err.message}</div>`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g,''));
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = vals[i]||'');
+    return obj;
+  });
+}
+
+// ============================================================
+// CONFIRM MODAL
+// ============================================================
+function showConfirm(message, callback) {
+  document.getElementById('confirmMessage').textContent = message;
+  document.getElementById('confirmBtn').onclick = () => { closeConfirmModal(); callback(); };
+  document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function closeConfirmModal() { document.getElementById('confirmModal').classList.add('hidden'); }
+
+// ============================================================
+// LIGHTBOX
+// ============================================================
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.remove('hidden');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); }
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatDate(d) {
+  if (!d) return '—';
+  try { return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e) { return d; }
+}
+function formatDateTime(d) {
+  if (!d) return '—';
+  try { return new Date(d).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}); } catch(e) { return d; }
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.add('hidden'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(m => m.classList.add('hidden'));
+    closeLightbox();
+  }
+});
+
+// ============================================================
+// BOOT
+// ============================================================
+initTeams();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+api/node_modules/
+api/local.settings.json
+.env
+.env.local
+dist/
+build/
+.DS_Store
+Thumbs.db
+*.log
