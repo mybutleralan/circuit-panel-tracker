@@ -510,7 +510,7 @@ async function initTeams() {
 
 async function getTeamsToken() {
   try {
-    teamsToken = await microsoftTeams.authentication.getAuthToken();
+    teamsToken = await microsoftTeams.authentication.getAuthToken({ resources: ["api://298a6303-e982-458b-b970-32315c55375e"] });
     const payload = JSON.parse(atob(teamsToken.split('.')[1]));
     currentUser = {
       userId: payload.oid,
